@@ -10,10 +10,6 @@ export function VoicePractice({ voices, volumes, onVoices, onVolumes }: {
   onVoices: (value: Pair) => void;
   onVolumes: (value: Volumes) => void;
 }) {
-  const mode = (value: 'both' | 'one' | 'two') => {
-    onVoices(value === 'both' ? [true, true] : value === 'one' ? [true, false] : [false, true]);
-  };
-
   return <section className="card practice-card">
     <div className="card-heading"><Music2 /><div><h2>Голоса</h2><p>Слушайте оба голоса вместе или каждый отдельно</p></div></div>
     <div className="voice-grid">
@@ -36,11 +32,6 @@ export function VoicePractice({ voices, volumes, onVoices, onVolumes }: {
           <b>{volumes[index]}%</b>
         </label>
       </div>)}
-    </div>
-    <div className="segmented three">
-      <button className={voices[0] && voices[1] ? 'active' : ''} onClick={() => mode('both')}>Оба голоса</button>
-      <button className={voices[0] && !voices[1] ? 'active' : ''} onClick={() => mode('one')}>Только голос 1</button>
-      <button className={!voices[0] && voices[1] ? 'active' : ''} onClick={() => mode('two')}>Только голос 2</button>
     </div>
   </section>;
 }
