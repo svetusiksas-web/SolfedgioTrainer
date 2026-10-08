@@ -1,0 +1,25 @@
+@media (min-width: 981px) {
+  .score-meta {
+    min-height: 50px;
+    padding: 7px 16px;
+  }
+
+  .score-meta h2 {
+    margin-top: 0;
+    font-size: 0.95rem;
+  }
+
+  .score-meta > div:first-child {
+    gap: 9px;
+  }
+
+  .score-scroll {
+    min-height: 520px;
+    max-height: calc(100vh - 170px);
+  }
+
+  .score-canvas {
+    padding-top: 4px;
+    padding-bottom: 44px;
+  }
+}
