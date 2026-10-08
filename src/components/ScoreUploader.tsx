@@ -1,0 +1,2 @@
+import{Upload}from'lucide-react';
+export function ScoreUploader({onFile,busy}:{onFile:(file:File)=>void;busy:boolean}){return <label className="upload-button">{busy?<span className="spinner"/>:<Upload size={19}/>} {busy?'Открываем партитуру…':'Загрузить MusicXML'}<input type="file" accept=".musicxml,.xml,.mxl" onChange={e=>{const f=e.target.files?.[0];if(f)onFile(f);e.currentTarget.value=''}}/></label>}
