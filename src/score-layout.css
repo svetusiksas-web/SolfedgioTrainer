@@ -22,4 +22,8 @@
     padding-top: 4px;
     padding-bottom: 44px;
   }
+
+  .score-canvas svg {
+    overflow: visible;
+  }
 }

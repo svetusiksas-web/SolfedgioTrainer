@@ -18,6 +18,7 @@ export function ScoreViewer({ xml, currentMeasure }: { xml: string | null; curre
     osmd.current = viewer;
     viewer.load(xml).then(() => {
       if (active) {
+        viewer.EngravingRules.PageBottomMargin = 12;
         viewer.render();
         scrollArea.current?.scrollTo({ left: 0, top: 0 });
       }
