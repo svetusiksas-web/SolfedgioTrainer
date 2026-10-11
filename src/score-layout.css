@@ -27,3 +27,22 @@
     overflow: visible;
   }
 }
+
+.landscape-button {
+  display: none;
+  border: 0;
+  border-radius: 8px;
+  background: #e8f2f8;
+  color: var(--navy);
+  padding: 6px 9px;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.landscape-button span { padding: 0; background: transparent; color: inherit; }
+.landscape-button svg { color: inherit; }
+
+@media (max-width: 980px) {
+  .landscape-button { display: flex; }
+}

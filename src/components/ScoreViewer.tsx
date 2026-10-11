@@ -7,6 +7,28 @@ export function ScoreViewer({ xml, currentMeasure }: { xml: string | null; curre
   const osmd = useRef<OpenSheetMusicDisplay | null>(null);
 
   useEffect(() => {
+    const element = host.current;
+    if (!element) return;
+
+    let frame = 0;
+    const resize = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (osmd.current && element.clientWidth) osmd.current.render();
+      });
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(element);
+    window.addEventListener('orientationchange', resize);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('orientationchange', resize);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!xml || !host.current) return;
     let active = true;
     const viewer = new OpenSheetMusicDisplay(host.current, {

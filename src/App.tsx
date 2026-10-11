@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, CircleAlert, FileMusic, GraduationCap } from 'lucide-react';
+import { BookOpen, CircleAlert, FileMusic, GraduationCap, Maximize2, Minimize2 } from 'lucide-react';
 import { ScoreUploader } from './components/ScoreUploader';
 import { ScoreViewer } from './components/ScoreViewer';
 import { PlaybackControls } from './components/Controls';
@@ -22,6 +22,7 @@ export default function App() {
   const [countIn, setCountIn] = useState(1);
   const [repeat, setRepeat] = useState(false);
   const [loop, setLoop] = useState({ enabled: false, start: 1, end: 4 });
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     engine.current = new AudioEngine();
@@ -43,6 +44,27 @@ export default function App() {
   }, [score, options]);
   useEffect(() => engine.current?.setTempo(bpm), [bpm]);
   useEffect(() => engine.current?.setMix(voices, volumes), [voices, volumes]);
+
+  useEffect(() => {
+    const updateFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', updateFullscreen);
+    return () => document.removeEventListener('fullscreenchange', updateFullscreen);
+  }, []);
+
+  const toggleLandscapeView = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await document.documentElement.requestFullscreen();
+      const orientation = screen.orientation as ScreenOrientation & { lock?: (value: string) => Promise<void> };
+      await orientation.lock?.('landscape');
+    } catch {
+      // Rotation remains available through the device when an embedded browser blocks fullscreen.
+    }
+  };
 
   const loadFile = async (file: File) => {
     setBusy(true);
@@ -86,7 +108,7 @@ export default function App() {
         <div className="score-meta">
           {score ? <>
             <div><FileMusic size={19} /><div><span>Партитура</span><h2>{score.title}</h2></div></div>
-            <div className="score-facts"><span>{score.measures.length} тактов</span><span>{score.beats}/{score.beatType}</span>{currentMeasure && <strong>Такт {currentMeasure}</strong>}</div>
+            <div className="score-facts"><span>{score.measures.length} тактов</span><span>{score.beats}/{score.beatType}</span>{currentMeasure && <strong>Такт {currentMeasure}</strong>}<button className="landscape-button" type="button" onClick={toggleLandscapeView} aria-label={fullscreen ? 'Выйти из полноэкранного режима' : 'Открыть в альбомном режиме'} title={fullscreen ? 'Выйти из полного режима' : 'Альбомный вид'}>{fullscreen ? <Minimize2 size={19} /> : <Maximize2 size={19} />}<span>Альбомный вид</span></button></div>
           </> : <div><BookOpen size={19} /><div><span>Рабочая область</span><h2>Нотный текст</h2></div></div>}
         </div>
         <ScoreViewer xml={score?.xml ?? null} currentMeasure={currentMeasure} />
