@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, CircleAlert, FileMusic, GraduationCap, Maximize2, Minimize2 } from 'lucide-react';
+import { BookOpen, CircleAlert, Eye, EyeOff, FileMusic, GraduationCap, Maximize2, Minimize2 } from 'lucide-react';
 import { ScoreUploader } from './components/ScoreUploader';
 import { ScoreViewer } from './components/ScoreViewer';
 import { PlaybackControls } from './components/Controls';
@@ -23,6 +23,7 @@ export default function App() {
   const [repeat, setRepeat] = useState(false);
   const [loop, setLoop] = useState({ enabled: false, start: 1, end: 4 });
   const [fullscreen, setFullscreen] = useState(false);
+  const [scoreVisible, setScoreVisible] = useState(true);
 
   useEffect(() => {
     engine.current = new AudioEngine();
@@ -99,7 +100,19 @@ export default function App() {
         <div className="brand"><h1>Тренажёр двухголосного<br />сольфеджио</h1></div>
       </div>
       <VoicePractice voices={voices} volumes={volumes} onVoices={setVoices} onVolumes={setVolumes} />
-      <ScoreUploader onFile={loadFile} busy={busy} />
+      <div className="file-actions">
+        <button
+          className={`score-visibility-button ${scoreVisible ? '' : 'is-hidden'}`}
+          type="button"
+          onClick={() => setScoreVisible(visible => !visible)}
+          aria-pressed={!scoreVisible}
+          title={scoreVisible ? 'Загрузить и заниматься без показа нот' : 'Показывать нотный текст'}
+        >
+          {scoreVisible ? <EyeOff size={19} /> : <Eye size={19} />}
+          {scoreVisible ? 'Скрыть ноты' : 'Показать ноты'}
+        </button>
+        <ScoreUploader onFile={loadFile} busy={busy} />
+      </div>
     </header>
 
     <main>
@@ -108,10 +121,10 @@ export default function App() {
         <div className="score-meta">
           {score ? <>
             <div><FileMusic size={19} /><div><span>Партитура</span><h2>{score.title}</h2></div></div>
-            <div className="score-facts"><span>{score.measures.length} тактов</span><span>{score.beats}/{score.beatType}</span>{currentMeasure && <strong>Такт {currentMeasure}</strong>}<button className="landscape-button" type="button" onClick={toggleLandscapeView} aria-label={fullscreen ? 'Выйти из полноэкранного режима' : 'Открыть в альбомном режиме'} title={fullscreen ? 'Выйти из полного режима' : 'Альбомный вид'}>{fullscreen ? <Minimize2 size={19} /> : <Maximize2 size={19} />}<span>Альбомный вид</span></button></div>
+            <div className="score-facts"><span>{score.measures.length} тактов</span><span>{score.beats}/{score.beatType}</span>{currentMeasure && <strong>Такт {currentMeasure}</strong>}<button className={`inline-visibility-button ${scoreVisible ? '' : 'is-hidden'}`} type="button" onClick={() => setScoreVisible(visible => !visible)} aria-pressed={!scoreVisible}>{scoreVisible ? <EyeOff size={18} /> : <Eye size={18} />}<span>{scoreVisible ? 'Скрыть ноты' : 'Показать ноты'}</span></button><button className="landscape-button" type="button" onClick={toggleLandscapeView} aria-label={fullscreen ? 'Выйти из полноэкранного режима' : 'Открыть в альбомном режиме'} title={fullscreen ? 'Выйти из полного режима' : 'Альбомный вид'}>{fullscreen ? <Minimize2 size={19} /> : <Maximize2 size={19} />}<span>Альбомный вид</span></button></div>
           </> : <div><BookOpen size={19} /><div><span>Рабочая область</span><h2>Нотный текст</h2></div></div>}
         </div>
-        <ScoreViewer xml={score?.xml ?? null} currentMeasure={currentMeasure} />
+        <ScoreViewer xml={score?.xml ?? null} currentMeasure={currentMeasure} hidden={!scoreVisible} />
       </section>
 
       <div className="sticky-controls">

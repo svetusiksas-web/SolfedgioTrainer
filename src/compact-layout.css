@@ -79,6 +79,11 @@
   flex: 0 0 auto;
 }
 
+.compact-topbar .file-actions {
+  margin-left: 0;
+  flex: 0 0 auto;
+}
+
 .dashboard-grid.settings-only {
   grid-template-columns: minmax(360px, 0.8fr) minmax(560px, 1.2fr);
 }
@@ -128,5 +133,16 @@
 
   .compact-topbar .voice-grid {
     grid-column: 1;
+  }
+
+  .compact-topbar .file-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .compact-topbar .score-visibility-button,
+  .compact-topbar .upload-button {
+    width: 100%;
   }
 }

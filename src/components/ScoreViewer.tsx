@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
+import { EyeOff } from 'lucide-react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 
-export function ScoreViewer({ xml, currentMeasure }: { xml: string | null; currentMeasure: number | null }) {
+export function ScoreViewer({ xml, currentMeasure, hidden }: { xml: string | null; currentMeasure: number | null; hidden: boolean }) {
   const scrollArea = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const osmd = useRef<OpenSheetMusicDisplay | null>(null);
@@ -29,7 +30,7 @@ export function ScoreViewer({ xml, currentMeasure }: { xml: string | null; curre
   }, []);
 
   useEffect(() => {
-    if (!xml || !host.current) return;
+    if (!xml || hidden || !host.current) return;
     let active = true;
     const viewer = new OpenSheetMusicDisplay(host.current, {
       autoResize: true,
@@ -50,7 +51,7 @@ export function ScoreViewer({ xml, currentMeasure }: { xml: string | null; curre
       osmd.current = null;
       if (host.current) host.current.innerHTML = '';
     };
-  }, [xml]);
+  }, [xml, hidden]);
 
   useEffect(() => {
     const root = host.current;
@@ -107,6 +108,10 @@ export function ScoreViewer({ xml, currentMeasure }: { xml: string | null; curre
 
   if (!xml) {
     return <div className="score-empty"><div className="empty-note">♫</div><h2>Загрузите двухголосный пример</h2><p>Подойдут файлы MusicXML из MuseScore: .musicxml, .xml или .mxl</p></div>;
+  }
+
+  if (hidden) {
+    return <div className="score-hidden" role="status"><EyeOff size={42} /><h2>Нотный текст скрыт</h2><p>Пример загружен и готов к работе. Воспроизведение и настройки голосов работают как обычно.</p></div>;
   }
 
   return <div className="score-scroll" ref={scrollArea}><div className="score-canvas" ref={host} aria-label="Нотный текст" /></div>;

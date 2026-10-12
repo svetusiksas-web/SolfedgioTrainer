@@ -46,3 +46,78 @@
 @media (max-width: 980px) {
   .landscape-button { display: flex; }
 }
+
+.file-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.file-actions .upload-button { margin-left: 0; }
+
+.score-visibility-button,
+.inline-visibility-button {
+  border: 1px solid #bfd0dc;
+  background: #f5f9fc;
+  color: var(--navy);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.score-visibility-button:hover,
+.inline-visibility-button:hover { background: #e8f2f8; }
+
+.score-visibility-button.is-hidden,
+.inline-visibility-button.is-hidden {
+  background: #fff1df;
+  border-color: #efc99e;
+  color: #8f4a18;
+}
+
+.inline-visibility-button {
+  padding: 6px 9px;
+  border: 0;
+  background: #e8f2f8;
+}
+
+.inline-visibility-button span {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.inline-visibility-button svg { color: inherit; }
+
+.score-hidden {
+  height: 360px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+}
+
+.score-hidden svg {
+  margin: 0 auto;
+  color: #9bb6c8;
+}
+
+.score-hidden h2 {
+  font-family: 'Playfair Display', serif;
+  color: #29455e;
+  margin: 12px 0 5px;
+  font-size: 1.55rem;
+}
+
+.score-hidden p {
+  max-width: 560px;
+  margin: 0;
+  font-size: .92rem;
+}
