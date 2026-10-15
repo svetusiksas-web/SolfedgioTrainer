@@ -73,8 +73,6 @@ export function ScoreViewer({ xml, currentMeasure, hidden }: { xml: string | nul
     let bottom = 0;
 
     measures.forEach(measure => {
-      const svg = root.querySelector('svg');
-      if (!svg) return;
       const box = measure.PositionAndShape;
       const x = box.AbsolutePosition.x * 10;
       const y = box.AbsolutePosition.y * 10;
@@ -84,18 +82,20 @@ export function ScoreViewer({ xml, currentMeasure, hidden }: { xml: string | nul
       top = Math.min(top, y);
       right = Math.max(right, x + width);
       bottom = Math.max(bottom, y + height);
-
-      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      rect.setAttribute('x', String(x));
-      rect.setAttribute('y', String(y));
-      rect.setAttribute('width', String(width));
-      rect.setAttribute('height', String(height));
-      rect.setAttribute('rx', '8');
-      rect.classList.add('measure-highlight');
-      svg.insertBefore(rect, svg.firstChild);
     });
 
     if (Number.isFinite(left) && Number.isFinite(top)) {
+      const svg = root.querySelector('svg');
+      if (svg) {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', String(left));
+        rect.setAttribute('y', String(top));
+        rect.setAttribute('width', String(right - left));
+        rect.setAttribute('height', String(bottom - top));
+        rect.setAttribute('rx', '8');
+        rect.classList.add('measure-highlight');
+        svg.insertBefore(rect, svg.firstChild);
+      }
       const measureCenterX = (left + right) / 2;
       const measureCenterY = (top + bottom) / 2;
       scroller.scrollTo({
