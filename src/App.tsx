@@ -3,149 +3,21 @@ import { BookOpen, CircleAlert, Eye, EyeOff, FileMusic, GraduationCap, Maximize2
 import { ScoreUploader } from './components/ScoreUploader';
 import { ScoreViewer } from './components/ScoreViewer';
 import { PlaybackControls } from './components/Controls';
-import { SettingsPanel, TempoPanel, VoicePractice } from './components/PracticePanels';
+import { SettingsPanel, SilentMeasures, TempoPanel, VoicePractice } from './components/PracticePanels';
 import { AudioEngine, type EngineOptions } from './music/AudioEngine';
 import { parseMusicXML } from './music/MusicXMLParser';
-import type { PlaybackStatus, ScoreData } from './music/types';
+import type { PlaybackStatus, ScoreData, VoiceFlags, VoiceMode, VoiceVolumes } from './music/types';
 
-export default function App() {
-  const engine = useRef<AudioEngine | null>(null);
-  const [score, setScore] = useState<ScoreData | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ type: 'error' | 'info'; text: string } | null>(null);
-  const [status, setStatus] = useState<PlaybackStatus>('stopped');
-  const [currentMeasure, setCurrentMeasure] = useState<number | null>(null);
-  const [bpm, setBpm] = useState(80);
-  const [voices, setVoices] = useState<[boolean, boolean]>([true, true]);
-  const [volumes, setVolumes] = useState<[number, number]>([82, 82]);
-  const [metronome, setMetronome] = useState(false);
-  const [countIn, setCountIn] = useState(1);
-  const [repeat, setRepeat] = useState(false);
-  const [loop, setLoop] = useState({ enabled: false, start: 1, end: 4 });
-  const [fullscreen, setFullscreen] = useState(false);
-  const [scoreVisible, setScoreVisible] = useState(true);
-
-  useEffect(() => {
-    engine.current = new AudioEngine();
-    return () => engine.current?.dispose();
-  }, []);
-
-  const options: EngineOptions | null = useMemo(() => score ? {
-    bpm,
-    enabled: voices,
-    volumes,
-    metronome,
-    countInMeasures: countIn,
-    loopWhole: repeat,
-    loopRange: loop,
-  } : null, [score, bpm, voices, volumes, metronome, countIn, repeat, loop]);
-
-  useEffect(() => {
-    if (score && options) engine.current?.configure(score, options, setCurrentMeasure, setStatus);
-  }, [score, options]);
-  useEffect(() => engine.current?.setTempo(bpm), [bpm]);
-  useEffect(() => engine.current?.setMix(voices, volumes), [voices, volumes]);
-
-  useEffect(() => {
-    const updateFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener('fullscreenchange', updateFullscreen);
-    return () => document.removeEventListener('fullscreenchange', updateFullscreen);
-  }, []);
-
-  const toggleLandscapeView = async () => {
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-        return;
-      }
-
-      await document.documentElement.requestFullscreen();
-      const orientation = screen.orientation as ScreenOrientation & { lock?: (value: string) => Promise<void> };
-      await orientation.lock?.('landscape');
-    } catch {
-      // Rotation remains available through the device when an embedded browser blocks fullscreen.
-    }
-  };
-
-  const loadFile = async (file: File) => {
-    setBusy(true);
-    setNotice(null);
-    engine.current?.stop();
-    try {
-      const parsed = await parseMusicXML(file);
-      if (parsed.partCount < 2) {
-        setScore(null);
-        setNotice({ type: 'error', text: 'В партитуре найден только один голос. Для режима двухголосия необходимы две партии.' });
-        return;
-      }
-      setScore(parsed);
-      setBpm(parsed.originalBpm);
-      setLoop({ enabled: false, start: 1, end: Math.min(4, parsed.measures.length) });
-      setVoices([true, true]);
-      if (parsed.partCount > 2) {
-        setNotice({ type: 'info', text: 'В партитуре найдено несколько партий. Сейчас используются Голос 1 и Голос 2.' });
-      }
-    } catch {
-      setScore(null);
-      setNotice({ type: 'error', text: 'Не удалось открыть нотный файл. Проверьте, что это корректный MusicXML-файл.' });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return <div className="app-shell">
-    <header className="topbar compact-topbar">
-      <div className="brand-group">
-        <div className="brand-mark"><GraduationCap /></div>
-        <div className="brand"><h1>Тренажёр двухголосного<br />сольфеджио</h1></div>
-      </div>
-      <VoicePractice voices={voices} volumes={volumes} onVoices={setVoices} onVolumes={setVolumes} />
-      <div className="file-actions">
-        <button
-          className={`score-visibility-button ${scoreVisible ? '' : 'is-hidden'}`}
-          type="button"
-          onClick={() => setScoreVisible(visible => !visible)}
-          aria-pressed={!scoreVisible}
-          title={scoreVisible ? 'Загрузить и заниматься без показа нот' : 'Показывать нотный текст'}
-        >
-          {scoreVisible ? <EyeOff size={19} /> : <Eye size={19} />}
-          {scoreVisible ? 'Скрыть ноты' : 'Показать ноты'}
-        </button>
-        <ScoreUploader onFile={loadFile} busy={busy} />
-      </div>
-    </header>
-
-    <main>
-      {notice && <div className={'notice ' + notice.type}><CircleAlert size={19} />{notice.text}<button onClick={() => setNotice(null)} aria-label="Закрыть">×</button></div>}
-      <section className="score-card">
-        <div className="score-meta">
-          {score ? <>
-            <div><FileMusic size={19} /><div><span>Партитура</span><h2>{score.title}</h2></div></div>
-            <div className="score-facts"><span>{score.measures.length} тактов</span><span>{score.beats}/{score.beatType}</span>{currentMeasure && <strong>Такт {currentMeasure}</strong>}<button className={`inline-visibility-button ${scoreVisible ? '' : 'is-hidden'}`} type="button" onClick={() => setScoreVisible(visible => !visible)} aria-pressed={!scoreVisible}>{scoreVisible ? <EyeOff size={18} /> : <Eye size={18} />}<span>{scoreVisible ? 'Скрыть ноты' : 'Показать ноты'}</span></button><button className="landscape-button" type="button" onClick={toggleLandscapeView} aria-label={fullscreen ? 'Выйти из полноэкранного режима' : 'Открыть в альбомном режиме'} title={fullscreen ? 'Выйти из полного режима' : 'Альбомный вид'}>{fullscreen ? <Minimize2 size={19} /> : <Maximize2 size={19} />}<span>Альбомный вид</span></button></div>
-          </> : <div><BookOpen size={19} /><div><span>Рабочая область</span><h2>Нотный текст</h2></div></div>}
-        </div>
-        <ScoreViewer xml={score?.xml ?? null} currentMeasure={currentMeasure} hidden={!scoreVisible} />
-      </section>
-
-      <div className="sticky-controls">
-        <PlaybackControls status={status} disabled={!score} onPlay={() => engine.current?.play()} onPause={() => engine.current?.pause()} onStop={() => engine.current?.stop()} />
-      </div>
-
-      <div className="dashboard-grid settings-only">
-        <TempoPanel bpm={bpm} originalBpm={score?.originalBpm ?? 80} onChange={setBpm} />
-        <SettingsPanel
-          metronome={metronome}
-          countIn={countIn}
-          repeat={repeat}
-          loop={loop}
-          measureCount={score?.measures.length ?? 1}
-          onMetronome={setMetronome}
-          onCountIn={setCountIn}
-          onRepeat={setRepeat}
-          onLoop={next => setLoop(next.start <= next.end ? next : { ...next, end: next.start })}
-        />
-      </div>
-    </main>
-    <footer>Все вычисления и звук работают локально в браузере. Нотные файлы никуда не отправляются.</footer>
-  </div>;
+export default function App(){
+ const engine=useRef<AudioEngine|null>(null);const [score,setScore]=useState<ScoreData|null>(null);const [busy,setBusy]=useState(false);const [notice,setNotice]=useState<{type:'error'|'info';text:string}|null>(null);const [status,setStatus]=useState<PlaybackStatus>('stopped');const [currentMeasure,setCurrentMeasure]=useState<number|null>(null);const [bpm,setBpm]=useState(80);const [mode,setMode]=useState<VoiceMode>(2);const [voices,setVoices]=useState<VoiceFlags>([true,true,false,false]);const [volumes,setVolumes]=useState<VoiceVolumes>([82,82,82,82]);const [mutedMeasures,setMutedMeasures]=useState<number[]>([]);const [metronome,setMetronome]=useState(false);const [countIn,setCountIn]=useState(1);const [repeat,setRepeat]=useState(false);const [loop,setLoop]=useState({enabled:false,start:1,end:4});const [fullscreen,setFullscreen]=useState(false);const [scoreVisible,setScoreVisible]=useState(true);
+ useEffect(()=>{engine.current=new AudioEngine();return()=>engine.current?.dispose()},[]);
+ const options:EngineOptions|null=useMemo(()=>score?{bpm,enabled:voices,volumes,metronome,countInMeasures:countIn,loopWhole:repeat,loopRange:loop,mutedMeasures:mode===1?mutedMeasures:[]}:null,[score,bpm,voices,volumes,metronome,countIn,repeat,loop,mode,mutedMeasures]);
+ useEffect(()=>{if(score&&options)engine.current?.configure(score,options,setCurrentMeasure,setStatus)},[score,options]);useEffect(()=>engine.current?.setTempo(bpm),[bpm]);useEffect(()=>engine.current?.setMix(voices,volumes),[voices,volumes]);
+ useEffect(()=>{const update=()=>setFullscreen(Boolean(document.fullscreenElement));document.addEventListener('fullscreenchange',update);return()=>document.removeEventListener('fullscreenchange',update)},[]);
+ const toggleLandscapeView=async()=>{try{if(document.fullscreenElement){await document.exitFullscreen();return}await document.documentElement.requestFullscreen();const orientation=screen.orientation as ScreenOrientation&{lock?:(value:string)=>Promise<void>};await orientation.lock?.('landscape')}catch{/* device rotation remains available */}};
+ const changeMode=(next:VoiceMode)=>{setMode(next);setVoices(voices.map((value,index)=>index<next?value:false) as VoiceFlags)};
+ const loadFile=async(file:File)=>{setBusy(true);setNotice(null);engine.current?.stop();try{const parsed=await parseMusicXML(file);setScore(parsed);setBpm(parsed.originalBpm);setLoop({enabled:false,start:1,end:Math.min(4,parsed.measures.length)});const detected=Math.max(1,Math.min(4,parsed.partCount)) as VoiceMode;setMode(detected);setVoices(parsed.availableVoices.map((available,index)=>available&&index<detected) as VoiceFlags);setMutedMeasures([])}catch{setScore(null);setNotice({type:'error',text:'Не удалось открыть нотный файл. Проверьте, что это корректный MusicXML-файл.'})}finally{setBusy(false)}};
+ return <div className="app-shell"><header className="topbar compact-topbar"><div className="brand-group"><div className="brand-mark"><GraduationCap/></div><div className="brand"><h1>Тренажёр по сольфеджио</h1></div></div><VoicePractice mode={mode} voices={voices} volumes={volumes} available={score?.availableVoices??[true,true,true,true]} onMode={changeMode} onVoices={setVoices} onVolumes={setVolumes}/><div className="file-actions"><button className={`score-visibility-button ${scoreVisible?'':'is-hidden'}`} type="button" onClick={()=>setScoreVisible(v=>!v)}>{scoreVisible?<EyeOff size={19}/>:<Eye size={19}/>} {scoreVisible?'Скрыть ноты':'Показать ноты'}</button><ScoreUploader onFile={loadFile} busy={busy}/></div></header>
+ <main>{notice&&<div className={'notice '+notice.type}><CircleAlert size={19}/>{notice.text}<button onClick={()=>setNotice(null)} aria-label="Закрыть">×</button></div>}<section className="score-card"><div className="score-meta">{score?<><div><FileMusic size={19}/><div><span>Партитура</span><h2>{score.title}</h2></div></div><div className="score-facts"><span>{score.measures.length} тактов</span><span>{score.beats}/{score.beatType}</span>{currentMeasure&&<strong>Такт {currentMeasure}</strong>}<button className="inline-visibility-button" onClick={()=>setScoreVisible(v=>!v)}>{scoreVisible?<EyeOff size={18}/>:<Eye size={18}/>}</button><button className="landscape-button" onClick={toggleLandscapeView}>{fullscreen?<Minimize2 size={19}/>:<Maximize2 size={19}/>}<span>Альбомный вид</span></button></div></>:<div><BookOpen size={19}/><div><span>Рабочая область</span><h2>Нотный текст</h2></div></div>}</div><ScoreViewer xml={score?.xml??null} currentMeasure={currentMeasure} hidden={!scoreVisible}/></section>
+ <div className="sticky-controls"><PlaybackControls status={status} disabled={!score} onPlay={()=>engine.current?.play()} onPause={()=>engine.current?.pause()} onStop={()=>engine.current?.stop()}/></div><div className="dashboard-grid settings-only"><TempoPanel bpm={bpm} originalBpm={score?.originalBpm??80} onChange={setBpm}/><SettingsPanel metronome={metronome} countIn={countIn} repeat={repeat} loop={loop} measureCount={score?.measures.length??1} onMetronome={setMetronome} onCountIn={setCountIn} onRepeat={setRepeat} onLoop={next=>setLoop(next.start<=next.end?next:{...next,end:next.start})}/></div>{mode===1&&score&&<SilentMeasures measureCount={score.measures.length} muted={mutedMeasures} onChange={setMutedMeasures}/>}</main><footer>Все вычисления и звук работают локально в браузере. Нотные файлы никуда не отправляются.</footer></div>
 }

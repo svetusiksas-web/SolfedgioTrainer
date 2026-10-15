@@ -1,10 +1,11 @@
 import * as Tone from 'tone';
-import { PPQ, type PlaybackStatus, type ScoreData } from './types';
+import { PPQ, type PlaybackStatus, type ScoreData, type VoiceFlags, type VoiceVolumes } from './types';
 
 export interface EngineOptions {
   bpm: number;
-  enabled: [boolean, boolean];
-  volumes: [number, number];
+  enabled: VoiceFlags;
+  volumes: VoiceVolumes;
+  mutedMeasures: number[];
   metronome: boolean;
   countInMeasures: number;
   loopWhole: boolean;
@@ -40,7 +41,7 @@ export class AudioEngine {
   private onStatus: (s: PlaybackStatus) => void = () => {};
 
   constructor() {
-    this.channels = [0, 1].map(() => {
+    this.channels = [0, 1, 2, 3].map(() => {
       const gain = new Tone.Gain(0.82).toDestination();
       const sampler = new Tone.Sampler({
         urls: pianoUrls,
@@ -81,7 +82,7 @@ export class AudioEngine {
     if (this.options) this.options.bpm = bpm;
   }
 
-  setMix(enabled: [boolean, boolean], volumes: [number, number]) {
+  setMix(enabled: VoiceFlags, volumes: VoiceVolumes) {
     enabled.forEach((on, i) => this.channels[i].gain.gain.rampTo(on ? volumes[i] / 100 : 0, 0.03));
     if (this.options) {
       this.options.enabled = enabled;
@@ -144,7 +145,7 @@ export class AudioEngine {
     const total = selectionEnd - this.base + this.offset;
 
     score.events
-      .filter(event => event.startTick >= this.base && event.startTick < selectionEnd)
+      .filter(event => event.startTick >= this.base && event.startTick < selectionEnd && !options.mutedMeasures.includes(event.measureNumber))
       .forEach(event => transport.schedule(time => {
         const duration = Tone.Ticks(event.durationTicks).toSeconds();
         this.playNote(event.voiceId, event.pitch, duration, time, event.velocity);
