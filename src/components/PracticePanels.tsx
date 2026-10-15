@@ -2,12 +2,13 @@ import { Gauge, Music2, Repeat2, SlidersHorizontal, Volume2 } from 'lucide-react
 import { Toggle } from './Controls';
 import type { VoiceFlags, VoiceMode, VoiceVolumes } from '../music/types';
 
-const voiceNames = ['Скрипичный · голос 1', 'Скрипичный · голос 2', 'Басовый · голос 1', 'Басовый · голос 2'];
+const voiceNames = ['Голос 1', 'Голос 2', 'Голос 3', 'Голос 4'];
+const modeNames = ['Одноголосие', 'Двухголосие', 'Трёхголосие', 'Четырёхголосие'];
 
 export function VoicePractice({ mode, voices, volumes, available, onMode, onVoices, onVolumes }: { mode:VoiceMode; voices:VoiceFlags; volumes:VoiceVolumes; available:VoiceFlags; onMode:(value:VoiceMode)=>void; onVoices:(value:VoiceFlags)=>void; onVolumes:(value:VoiceVolumes)=>void }) {
   return <section className="card practice-card">
-    <div className="card-heading"><Music2 /><div><h2>Голоса</h2><p>Выберите режим, линии и громкость</p></div></div>
-    <div className="mode-selector" aria-label="Количество голосов">{([1,2,3,4] as VoiceMode[]).map(value=><button type="button" className={mode===value?'active':''} onClick={()=>onMode(value)} key={value}>{value}</button>)}</div>
+    <div className="card-heading"><Music2 /><div><h2>Режим: {modeNames[mode-1]}</h2><p>Голоса пронумерованы сверху вниз по партитуре</p></div></div>
+    <div className="mode-selector" aria-label="Режим тренажёра">{([1,2,3,4] as VoiceMode[]).map(value=><button type="button" className={mode===value?'active':''} onClick={()=>onMode(value)} key={value}>{modeNames[value-1]}</button>)}</div>
     <div className="voice-grid">{[0,1,2,3].slice(0,mode).map(index=><div className={'voice-strip voice-'+(index+1)+(!available[index]?' unavailable':'')} key={index}>
       <Toggle checked={voices[index]} onChange={checked=>{const next=[...voices] as VoiceFlags;next[index]=checked;onVoices(next)}} label={voiceNames[index]} />
       <label className="volume"><Volume2 size={17}/><input aria-label={'Громкость: '+voiceNames[index]} type="range" min="0" max="100" value={volumes[index]} onChange={event=>{const next=[...volumes] as VoiceVolumes;next[index]=+event.target.value;onVolumes(next)}}/><b>{volumes[index]}%</b></label>
@@ -16,8 +17,7 @@ export function VoicePractice({ mode, voices, volumes, available, onMode, onVoic
 }
 
 export function SilentMeasures({ measureCount, muted, onChange }: { measureCount:number; muted:number[]; onChange:(value:number[])=>void }) {
-  if (!measureCount) return null;
-  return <section className="card silent-measures"><div className="card-heading compact"><Music2/><div><h2>Тихие такты</h2><p>В одноголосии отмеченные такты не звучат</p></div></div><div className="measure-buttons">{Array.from({length:measureCount},(_,i)=>i+1).map(number=><button type="button" key={number} className={muted.includes(number)?'muted':''} aria-pressed={muted.includes(number)} onClick={()=>onChange(muted.includes(number)?muted.filter(n=>n!==number):[...muted,number].sort((a,b)=>a-b))}>{number}</button>)}</div></section>;
+  return <section className="card silent-measures"><div className="card-heading compact"><Music2/><div><h2>Отключить звук в отдельных тактах</h2><p>{measureCount?'Нажмите номера тактов, которые должны пройти без звука':'Сначала загрузите MusicXML — здесь появятся кнопки всех тактов'}</p></div></div>{measureCount>0&&<><div className="measure-buttons">{Array.from({length:measureCount},(_,i)=>i+1).map(number=><button type="button" key={number} className={muted.includes(number)?'muted':''} aria-label={`Такт ${number}: ${muted.includes(number)?'включить звук':'отключить звук'}`} aria-pressed={muted.includes(number)} onClick={()=>onChange(muted.includes(number)?muted.filter(n=>n!==number):[...muted,number].sort((a,b)=>a-b))}>{number}</button>)}</div><p className="measure-hint">Зачёркнутые красные номера — звук отключён.</p></>}</section>;
 }
 
 export function TempoPanel({ bpm, originalBpm, onChange }: { bpm:number; originalBpm:number; onChange:(value:number)=>void }) {
