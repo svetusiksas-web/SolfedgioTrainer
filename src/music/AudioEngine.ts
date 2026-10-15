@@ -100,7 +100,10 @@ export class AudioEngine {
       this.startCursor();
       return;
     }
-    await Promise.race([Tone.loaded(), new Promise<void>(resolve => window.setTimeout(resolve, 3500))]);
+    // Four independent voice channels need longer to prepare than the original
+    // two-channel version. Always wait for the piano samples so playback never
+    // starts with the synthetic fallback timbre.
+    await Tone.loaded();
     this.clear();
     this.build();
     transport.position = 0;
