@@ -10,6 +10,7 @@ export interface EngineOptions {
   countInMeasures: number;
   loopWhole: boolean;
   loopRange: { enabled: boolean; start: number; end: number };
+  transposeSemitones: number;
 }
 
 type PianoChannel = {
@@ -131,7 +132,8 @@ export class AudioEngine {
     const channel = this.channels[voiceId];
     if (!channel) return;
     const instrument = channel.sampler.loaded ? channel.sampler : channel.fallback;
-    instrument.triggerAttackRelease(pitch, Math.max(0.04, duration * 0.92), time, velocity);
+    const transposedPitch = Tone.Frequency(pitch).transpose(this.options?.transposeSemitones ?? 0).toNote();
+    instrument.triggerAttackRelease(transposedPitch, Math.max(0.04, duration * 0.92), time, velocity);
   }
 
   private build() {

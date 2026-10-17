@@ -1,0 +1,51 @@
+.transpose-value {
+  margin-left: auto;
+  color: var(--navy);
+  font-family: 'Playfair Display', serif;
+  font-size: 1.35rem;
+  white-space: nowrap;
+}
+
+.transpose-value small {
+  font-family: Manrope, sans-serif;
+  font-size: .65rem;
+}
+
+.transpose-actions {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  padding: 4px;
+  border-radius: 11px;
+  background: #eef3f7;
+}
+
+.transpose-actions button {
+  padding: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #476173;
+  font-size: .86rem;
+  font-weight: 800;
+}
+
+.transpose-actions button:hover { background: #ffffff99; }
+
+.transpose-actions button.active {
+  background: #fff;
+  color: var(--navy);
+  box-shadow: 0 2px 7px #1d35451f;
+}
+
+.transpose-hint {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: .72rem;
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .transpose-card .card-heading { align-items: flex-start; }
+  .transpose-value { font-size: 1.1rem; }
+}

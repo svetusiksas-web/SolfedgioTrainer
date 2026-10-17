@@ -1,4 +1,4 @@
-import { Gauge, Music2, Repeat2, SlidersHorizontal, Volume2 } from 'lucide-react';
+import { Gauge, Music2, Repeat2, SlidersHorizontal, Volume2, WandSparkles } from 'lucide-react';
 import { Toggle } from './Controls';
 import type { VoiceFlags, VoiceMode, VoiceVolumes } from '../music/types';
 
@@ -23,6 +23,12 @@ export function SilentMeasures({ measureCount, muted, onChange }: { measureCount
 export function TempoPanel({ bpm, originalBpm, onChange }: { bpm:number; originalBpm:number; onChange:(value:number)=>void }) {
   const change=(value:number)=>onChange(Math.min(180,Math.max(40,Math.round(value))));
   return <section className="card"><div className="card-heading compact"><Gauge/><div><h2>Темп</h2><p>Исходный темп — {originalBpm} BPM</p></div><strong className="bpm">♩ = {bpm} <small>BPM</small></strong></div><input className="tempo-slider" aria-label="Темп" type="range" min="40" max="180" value={bpm} onChange={e=>change(+e.target.value)}/><div className="tempo-actions"><div>{[-10,-5,5,10].map(v=><button key={v} onClick={()=>change(bpm+v)}>{v>0?'+'+v:v}</button>)}</div><div>{[50,75,100,125].map(p=><button key={p} className={bpm===Math.round(originalBpm*p/100)?'active':''} onClick={()=>change(originalBpm*p/100)}>{p}%</button>)}</div></div></section>;
+}
+
+export function TransposePanel({ value, onChange }: { value:number; onChange:(value:number)=>void }) {
+  const change=(delta:number)=>onChange(Math.min(6,Math.max(-6,Math.round((value+delta)*2)/2)));
+  const label=value===0?'0':`${value>0?'+':''}${String(value).replace('.',',')}`;
+  return <section className="card transpose-card"><div className="card-heading compact"><WandSparkles/><div><h2>Транспонировать</h2><p>Повысить или понизить звучание во всех голосах</p></div><strong className="transpose-value">{label} <small>{Math.abs(value)===1?'ТОН':'ТОНА'}</small></strong></div><div className="transpose-actions" aria-label="Транспонирование в тонах">{[-1,-0.5].map(delta=><button type="button" key={delta} onClick={()=>change(delta)}>{String(delta).replace('.',',')}</button>)}<button type="button" className={value===0?'active':''} onClick={()=>onChange(0)} aria-label="Сбросить транспонирование">0</button>{[0.5,1].map(delta=><button type="button" key={delta} onClick={()=>change(delta)}>+{String(delta).replace('.',',')}</button>)}</div><p className="transpose-hint">Шаг 0,5 тона = 1 полутон · диапазон ±6 тонов</p></section>;
 }
 
 type SettingsProps={metronome:boolean;countIn:number;repeat:boolean;loop:{enabled:boolean;start:number;end:number};measureCount:number;onMetronome:(v:boolean)=>void;onCountIn:(v:number)=>void;onRepeat:(v:boolean)=>void;onLoop:(v:{enabled:boolean;start:number;end:number})=>void};
