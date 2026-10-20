@@ -2,6 +2,56 @@ import { useEffect, useRef } from 'react';
 import { EyeOff } from 'lucide-react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 
+function xmlForDisplay(xml: string) {
+  const document = new DOMParser().parseFromString(xml, 'application/xml');
+  if (document.querySelector('parsererror')) return xml;
+
+  document.querySelectorAll('score-partwise > part').forEach(part => {
+    const soundingStaves = new Set(
+      Array.from(part.querySelectorAll('note'))
+        .filter(note => !note.querySelector(':scope > rest'))
+        .map(note => note.querySelector(':scope > staff')?.textContent?.trim() || '1'),
+    );
+    if (soundingStaves.size !== 1) return;
+
+    const keptStaff = [...soundingStaves][0];
+    const declaredStaves = Math.max(
+      1,
+      ...Array.from(part.querySelectorAll('attributes > staves')).map(node => Number(node.textContent) || 1),
+    );
+    if (declaredStaves < 2) return;
+
+    part.querySelectorAll('attributes > staves').forEach(node => { node.textContent = '1'; });
+    part.querySelectorAll('attributes > clef').forEach(clef => {
+      const number = clef.getAttribute('number') || '1';
+      if (number !== keptStaff) clef.remove();
+      else clef.removeAttribute('number');
+    });
+    part.querySelectorAll('attributes > staff-details').forEach(details => {
+      const number = details.getAttribute('number') || '1';
+      if (number !== keptStaff) details.remove();
+      else details.removeAttribute('number');
+    });
+
+    part.querySelectorAll('measure').forEach(measure => {
+      measure.querySelectorAll(':scope > note').forEach(note => {
+        const staff = note.querySelector(':scope > staff')?.textContent?.trim() || '1';
+        if (staff !== keptStaff) note.remove();
+        else note.querySelector(':scope > staff')?.remove();
+      });
+
+      const remainingVoices = new Set(
+        Array.from(measure.querySelectorAll(':scope > note > voice')).map(node => node.textContent?.trim() || '1'),
+      );
+      if (remainingVoices.size <= 1) {
+        measure.querySelectorAll(':scope > backup, :scope > forward').forEach(node => node.remove());
+      }
+    });
+  });
+
+  return new XMLSerializer().serializeToString(document);
+}
+
 export function ScoreViewer({ xml, currentMeasure, hidden }: { xml: string | null; currentMeasure: number | null; hidden: boolean }) {
   const scrollArea = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
@@ -39,7 +89,7 @@ export function ScoreViewer({ xml, currentMeasure, hidden }: { xml: string | nul
       drawingParameters: 'compacttight',
     });
     osmd.current = viewer;
-    viewer.load(xml).then(() => {
+    viewer.load(xmlForDisplay(xml)).then(() => {
       if (active) {
         viewer.EngravingRules.PageBottomMargin = 12;
         viewer.render();
