@@ -16,6 +16,14 @@
   white-space: normal;
 }
 
+.brand-author {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
 .compact-topbar > .practice-card {
   flex: 1 1 680px;
   display: grid;
